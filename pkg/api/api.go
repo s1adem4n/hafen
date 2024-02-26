@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"hafen/frontend"
 	"hafen/pkg/caddy"
 	"hafen/pkg/config"
 	"hafen/pkg/db"
@@ -64,6 +65,9 @@ func NewAPI(queries *db.Queries, config *config.Config, tunnelManager *tunnel.Tu
 }
 
 func (a *API) RegisterRoutes() {
+	fs := echo.MustSubFS(frontend.Build, "dist")
+	a.echo.StaticFS("/", fs)
+
 	a.echo.GET("/tunnels", a.GetTunnels)
 	a.echo.GET("/tunnels/:id", a.GetTunnel)
 	a.echo.POST("/tunnels", a.CreateTunnel)
