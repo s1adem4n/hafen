@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	handler := slog.NewJSONHandler(os.Stdout, nil)
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{})
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
 
@@ -28,7 +28,12 @@ func main() {
 	}
 
 	if config.Caddy.TunnelServer {
-		cmd := exec.Command("ssh", "-N", "-L", "2019:localhost:2019", fmt.Sprintf("%s@%s", config.Server.User, config.Server.Host))
+		cmd := exec.Command(
+			"ssh",
+			"-p", fmt.Sprintf("%d", config.Server.Port),
+			"-N", "-L", "2019:localhost:2019",
+			fmt.Sprintf("%s@%s", config.Server.User, config.Server.Host),
+		)
 		err := cmd.Start()
 		if err != nil {
 			logger.Error("Failed to start caddy tunnel", "err", err)
@@ -64,6 +69,7 @@ func main() {
 	api := api.NewAPI(queries, config, tunnelManager, caddyManager, logger)
 	api.RegisterRoutes()
 
+	slog.Info("Starting server", "host", config.API.Host, "port", config.API.Port)
 	go api.Start()
 
 	signals := make(chan os.Signal, 1)

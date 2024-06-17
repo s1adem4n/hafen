@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hafen/pkg/config"
 	"hafen/pkg/db"
+	"log/slog"
 	"os/exec"
 )
 
@@ -22,8 +23,11 @@ func NewTunnelManager(config *config.Config, queries *db.Queries) *TunnelManager
 }
 
 func (t *TunnelManager) Start(ctx context.Context, tunnel *db.Tunnel) error {
+	slog.Info("Starting tunnel", "id", tunnel.ID)
+
 	auth := fmt.Sprintf("%s@%s", t.config.Server.User, t.config.Server.Host)
-	tunnelArg := fmt.Sprintf("%d:%s:%d", tunnel.RemotePort, tunnel.LocalHost, tunnel.LocalPort)
+	// 0.0.0.0 to bind to all interfaces on the server
+	tunnelArg := fmt.Sprintf("0.0.0.0:%d:%s:%d", tunnel.RemotePort, tunnel.LocalHost, tunnel.LocalPort)
 
 	args := []string{
 		"-N", "-R",
@@ -60,7 +64,7 @@ func (t *TunnelManager) Stop(ctx context.Context, tunnel *db.Tunnel) error {
 	}
 
 	// gracefully close the tunnel by sending a SIGTERM
-	cmd := exec.Command("kill", "-INT", fmt.Sprintf("%d", *tunnel.Pid))
+	cmd := exec.Command("kill", "-TERM", fmt.Sprintf("%d", *tunnel.Pid))
 	err := cmd.Run()
 	if err != nil {
 		return err
