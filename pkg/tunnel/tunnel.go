@@ -8,6 +8,7 @@ import (
 	"hafen/pkg/db"
 	"log/slog"
 	"os/exec"
+	"strings"
 )
 
 type TunnelManager struct {
@@ -23,18 +24,20 @@ func NewTunnelManager(config *config.Config, queries *db.Queries) *TunnelManager
 }
 
 func (t *TunnelManager) Start(ctx context.Context, tunnel *db.Tunnel) error {
-	slog.Info("Starting tunnel", "id", tunnel.ID)
-
 	auth := fmt.Sprintf("%s@%s", t.config.Server.User, t.config.Server.Host)
 	// 0.0.0.0 to bind to all interfaces on the server
 	tunnelArg := fmt.Sprintf("0.0.0.0:%d:%s:%d", tunnel.RemotePort, tunnel.LocalHost, tunnel.LocalPort)
 
 	args := []string{
-		"-N", "-R",
-		tunnelArg,
+		"-N", "-T",
+		"-o", "ServerAliveInterval=60",
+		"-o", "ServerAliveCountMax=10",
+		"-o", "ExitOnForwardFailure=yes",
 		"-p", fmt.Sprintf("%d", t.config.Server.Port),
+		"-R", tunnelArg,
 		auth,
 	}
+	slog.Info("Starting tunnel", "args", strings.Join(args, " "))
 	cmd := exec.Command("ssh", args...)
 	err := cmd.Start()
 	if err != nil {
