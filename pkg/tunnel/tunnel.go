@@ -51,7 +51,11 @@ func (t *TunnelManager) Start(ctx context.Context, tunnel *db.Tunnel) error {
 	})
 
 	go func() {
-		cmd.Wait()
+		err := cmd.Wait()
+		if err != nil {
+			slog.Error("Tunnel exited", "err", err)
+		}
+
 		t.queries.UpdateTunnelPid(ctx, db.UpdateTunnelPidParams{
 			Pid: nil,
 			ID:  tunnel.ID,
