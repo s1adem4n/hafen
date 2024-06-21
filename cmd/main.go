@@ -30,8 +30,12 @@ func main() {
 	if config.Caddy.TunnelServer {
 		cmd := exec.Command(
 			"ssh",
+			"-N", "-T",
+			"-o", "ServerAliveInterval=60",
+			"-o", "ServerAliveCountMax=10",
+			"-o", "ExitOnForwardFailure=yes",
 			"-p", fmt.Sprintf("%d", config.Server.Port),
-			"-N", "-L", "2019:localhost:2019",
+			"-L", "2019:localhost:2019",
 			fmt.Sprintf("%s@%s", config.Server.User, config.Server.Host),
 		)
 		err := cmd.Start()
