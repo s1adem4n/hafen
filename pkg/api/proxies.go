@@ -58,7 +58,7 @@ func (a *API) DeleteProxy(c echo.Context) error {
 		return RespondError(c, 404, "Proxy not found", err)
 	}
 
-	err = a.caddyManager.RemoveProxy(proxy.Match)
+	err = a.caddyManager.RemoveProxy(proxy)
 	if err != nil {
 		return RespondError(c, 500, "Failed to delete proxy", err)
 	}

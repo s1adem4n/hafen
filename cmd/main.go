@@ -64,9 +64,9 @@ func main() {
 	tunnelManager := tunnel.NewTunnelManager(config, queries)
 	caddyManager := caddy.NewCaddyManager(config, queries)
 
-	err = caddyManager.LoadDefaultConfig()
+	err = caddyManager.Init()
 	if err != nil {
-		logger.Error("Failed to load default caddy config", "err", err)
+		logger.Error("Failed to initialize", "err", err)
 		os.Exit(1)
 	}
 
@@ -97,6 +97,8 @@ func main() {
 			}
 		}
 	}
+
+	conn.Close()
 
 	logger.Info("Shutting down")
 }
