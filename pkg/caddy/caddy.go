@@ -27,7 +27,34 @@ func NewCaddyManager(config *config.Config, queries *db.Queries) *CaddyManager {
 }
 
 func (c *CaddyManager) Init() error {
-	return c.client.Init()
+	err := c.client.Init()
+	if err != nil {
+		return err
+	}
+
+	proxies, err := c.queries.GetProxies(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, proxy := range proxies {
+		id := GenerateID(proxy.Match)
+		if c.client.ObjectExists(fmt.Sprintf("id/%s", id)) {
+			continue
+		}
+
+		route := NewProxy(
+			id,
+			proxy.Upstream,
+			proxy.Match,
+		)
+		err := c.client.AddRoute(route)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (c *CaddyManager) AddProxy(ctx context.Context, proxy db.CreateProxyParams) (*db.Proxy, error) {
